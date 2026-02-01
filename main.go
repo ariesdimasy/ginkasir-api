@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"ginkasir/config"
 	"ginkasir/database"
+	"ginkasir/handlers"
+	"ginkasir/repositories"
+	"ginkasir/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +17,15 @@ func main() {
 	database.InitPgDB()
 
 	PORT := ":8082"
+
+	categoryRepo := repositories.NewCategoryRepository(database.DB)
+	categoryService := services.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
 	app := gin.Default()
+
+	routerGroup := app.Group("/api")
+	categoryHandler.SetupRoutes(routerGroup)
 
 	app.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
