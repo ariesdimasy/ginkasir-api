@@ -72,7 +72,7 @@ func (cr *categoryRepository) FindByName(name string) (*models.Category, error) 
 
 // FindByID implements [CategoryRepository].
 func (cr *categoryRepository) FindByID(id int64) (*models.Category, error) {
-	var category models.Category
+	var category *models.Category
 
 	err := cr.db.First(&category, id).Error
 
@@ -83,7 +83,7 @@ func (cr *categoryRepository) FindByID(id int64) (*models.Category, error) {
 		return nil, err
 	}
 
-	return &category, nil
+	return category, nil
 
 }
 
