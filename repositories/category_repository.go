@@ -9,7 +9,7 @@ import (
 type CategoryRepository interface {
 	Create(category *models.Category) error
 	FindByID(id int64) (*models.Category, error)
-	FindAll(page int, limit int) ([]*models.Category, int64, error)
+	FindAll(query *models.SearchCategoryRequest) ([]*models.Category, int64, error)
 	FindByName(name string) (*models.Category, error)
 	Update(category *models.Category) error
 	Delete(id int64) error
@@ -33,24 +33,37 @@ func (cr *categoryRepository) Delete(id int64) error {
 }
 
 // FindAll implements [CategoryRepository].
-func (cr *categoryRepository) FindAll(page int, limit int) ([]*models.Category, int64, error) {
+func (cr *categoryRepository) FindAll(query *models.SearchCategoryRequest) ([]*models.Category, int64, error) {
 
 	var categories []*models.Category
 	var total int64
 
-	if errCount := cr.db.Model(&models.Category{}).Count(&total).Error; errCount != nil {
-		return nil, 0, errCount
+	errCount := cr.db.Model(&models.Category{})
+
+	if query.Name != "" {
+		errCount = errCount.Where("name ILIKE ? ", "%"+query.Name+"%")
 	}
 
-	offset := (page - 1) * limit
+	errCount = errCount.Count(&total)
+
+	if errCount.Error != nil {
+		return nil, 0, errCount.Error
+	}
+
+	offset := (query.Page - 1) * query.Limit
 	errData := cr.db.
 		Order("created_at DESC").
 		Offset(offset).
-		Limit(limit).
-		Find(&categories).Error
+		Limit(query.Limit)
 
-	if errData != nil {
-		return nil, 0, errData
+	if query.Name != "" {
+		errData = errData.Where("name ILIKE ? ", "%"+query.Name+"%")
+	}
+
+	errData = errData.Find(&categories)
+
+	if errData.Error != nil {
+		return nil, 0, errData.Error
 	}
 
 	return categories, total, nil

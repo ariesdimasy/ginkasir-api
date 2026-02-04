@@ -10,7 +10,7 @@ import (
 type CategoryService interface {
 	CreateCategory(req *models.CreateCategoryRequest) (*models.Category, error)
 	GetCategoryByID(id int64) (*models.Category, error)
-	GetAllCategories(page, limit int) ([]*models.Category, int64, error)
+	GetAllCategories(*models.SearchCategoryRequest) ([]*models.Category, int64, error)
 	UpdateCategory(id int64, req *models.UpdateCategoryRequest) (*models.Category, error)
 	DeleteCategory(id int64) error
 }
@@ -69,15 +69,20 @@ func (cs *categoryService) GetCategoryByID(id int64) (*models.Category, error) {
 
 }
 
-func (cs *categoryService) GetAllCategories(page, limit int) ([]*models.Category, int64, error) {
-	if page < 1 {
-		page = 1
+func (cs *categoryService) GetAllCategories(query *models.SearchCategoryRequest) ([]*models.Category, int64, error) {
+	if query.Page < 1 {
+		query.Page = 1
 	}
-	if limit < 1 || limit > 100 {
-		limit = 10
+	if query.Limit < 1 || query.Limit > 100 {
+		query.Limit = 10
 	}
 
-	categories, total, err := cs.repo.FindAll(page, limit)
+	var categories []*models.Category
+	var total int64
+	var err error
+
+	categories, total, err = cs.repo.FindAll(query)
+
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get categories: %v", err)
 	}

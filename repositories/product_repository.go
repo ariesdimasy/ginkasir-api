@@ -7,9 +7,9 @@ import (
 )
 
 type ProductRepository interface {
-	FindAllProducts(page int, limit int) ([]*models.Product, int64, error)
+	FindAll(req *models.SearchProductRequest) ([]*models.Product, int64, error)
 	FindByID(id int64) (*models.Product, error)
-	FindByName(name string, page int, limit int) ([]*models.Product, int64, error)
+	FindByName(name string) (*models.Product, error)
 	CreateProduct(req *models.CreateProductRequest) error
 	UpdateProduct(id int64, req *models.UpdateProductRequest) error
 	DeleteProduct(id int64) error
@@ -23,7 +23,7 @@ func NewProductRepository(db *gorm.DB) ProductRepository {
 	return &productRepository{db: db}
 }
 
-func (pr *productRepository) FindAllProducts(page int, limit int) ([]*models.Product, int64, error) {
+func (pr *productRepository) FindAll(req *models.SearchProductRequest) ([]*models.Product, int64, error) {
 	var products []*models.Product
 	var total int64
 
@@ -33,15 +33,20 @@ func (pr *productRepository) FindAllProducts(page int, limit int) ([]*models.Pro
 		return nil, 0, errCount
 	}
 
-	offset := (page - 1) * limit
-	errProduct := pr.db.
+	offset := (req.Page - 1) * req.Limit
+	errData := pr.db.
 		Order("created_at DESC").
 		Offset(offset).
-		Limit(limit).
-		Find(&products)
+		Limit(req.Limit)
 
-	if errProduct != nil {
-		return nil, 0, errProduct.Error
+	if req.Name != "" {
+		errData = errData.Where("name ILIKE ? ", "%"+req.Name+"%")
+	}
+
+	errData = errData.Find(&products)
+
+	if errData.Error != nil {
+		return nil, 0, errData.Error
 	}
 
 	return products, total, nil
@@ -60,31 +65,18 @@ func (pr *productRepository) FindByID(id int64) (*models.Product, error) {
 	return product, nil
 }
 
-func (pr *productRepository) FindByName(name string, page int, limit int) ([]*models.Product, int64, error) {
+func (pr *productRepository) FindByName(name string) (*models.Product, error) {
 
-	var products []*models.Product
+	var product *models.Product
 
-	var total int64
-
-	errCount := pr.db.Model(&models.Product{}).Count(&total).Error
-
-	if errCount != nil {
-		return nil, 0, errCount
-	}
-
-	offset := (page - 1) * limit
-
-	errProducts := pr.db.Where("name like ?", "%"+name+"%").
-		Order("created_at DESC").
-		Offset(offset).
-		Limit(limit).
-		Find(&products)
+	errProducts := pr.db.Where("name = ?", name).
+		Find(&product)
 
 	if errProducts != nil {
-		return nil, 0, errProducts.Error
+		return nil, errProducts.Error
 	}
 
-	return products, total, nil
+	return product, nil
 
 }
 

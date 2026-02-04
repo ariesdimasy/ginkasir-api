@@ -74,8 +74,13 @@ func (h *CategoryHandler) GetAll(c *gin.Context) {
 	// Get pagination parameters
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	name := c.Query("name")
 
-	categories, total, err := h.service.GetAllCategories(page, limit)
+	categories, total, err := h.service.GetAllCategories(&models.SearchCategoryRequest{
+		Page:  page,
+		Limit: limit,
+		Name:  name,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
