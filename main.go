@@ -22,10 +22,15 @@ func main() {
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 
+	productRepo := repositories.NewProductRepository(database.DB)
+	productService := services.NewProductService(productRepo)
+	productHandler := handlers.NewProductHandler(productService)
+
 	app := gin.Default()
 
 	routerGroup := app.Group("/api")
 	categoryHandler.SetupRoutes(routerGroup)
+	productHandler.SetupRoutes(routerGroup)
 
 	app.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{

@@ -2,12 +2,9 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type Product struct {
-	gorm.Model
 	ID          uint      `json:"id" gorm:"primaryKey"`
 	Name        string    `json:"name" `
 	Description string    `json:"description"`
@@ -16,7 +13,12 @@ type Product struct {
 	CategoryID  *uint     `json:"category_id"`
 	Category    Category  `gorm:"foreignkey:CategoryID"`
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime" `
-	UpdateAt    time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+}
+
+// Error implements [error].
+func (p *Product) Error() string {
+	panic("unimplemented")
 }
 
 // Request DTOs

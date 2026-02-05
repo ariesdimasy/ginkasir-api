@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"ginkasir/models"
 	"ginkasir/repositories"
@@ -72,14 +73,69 @@ func (ps *productService) CreateProduct(req *models.CreateProductRequest) error 
 		return fmt.Errorf("product name already exists ")
 	}
 
-	return ps.repo.CreateProduct(req)
+	product := &models.Product{
+		Name:        req.Name,
+		Description: req.Description,
+		Stock:       req.Stock,
+		Price:       req.Price,
+		CategoryID:  &req.CategoryID,
+	}
+
+	return ps.repo.CreateProduct(product)
 
 }
 
 func (ps *productService) UpdateProduct(id int64, req *models.UpdateProductRequest) error {
-	return ps.repo.UpdateProduct(id, req)
+
+	if id <= 0 {
+		return errors.New("invalid product id")
+	}
+
+	// Cek apakah product ada
+	product, err := ps.repo.FindByID(id)
+	if err != nil {
+		return fmt.Errorf("failed to find product: %v", err)
+	}
+	if product == nil {
+		return errors.New("product not found")
+	}
+
+	productRequest := &models.Product{
+		Name:        req.Name,
+		Description: req.Description,
+		Stock:       req.Stock,
+		Price:       req.Price,
+		CategoryID:  &req.CategoryID,
+	}
+
+	errUpdate := ps.repo.UpdateProduct(id, productRequest)
+
+	if errUpdate != nil {
+		return fmt.Errorf("failed to update product: %v ", errUpdate)
+	}
+
+	return productRequest
 }
 
 func (ps *productService) DeleteProduct(id int64) error {
-	return ps.repo.DeleteProduct(id)
+	if id <= 0 {
+		return errors.New("invalid product id")
+	}
+
+	// Cek apakah product ada
+	product, err := ps.repo.FindByID(id)
+	if err != nil {
+		return fmt.Errorf("failed to find product: %v", err)
+	}
+	if product == nil {
+		return errors.New("product not found")
+	}
+
+	errDelete := ps.repo.DeleteProduct(id)
+
+	if errDelete != nil {
+		return fmt.Errorf("failed to update product: %v ", errDelete)
+	}
+
+	return nil
 }

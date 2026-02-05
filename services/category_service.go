@@ -101,17 +101,6 @@ func (cs *categoryService) UpdateCategory(id int64, req *models.UpdateCategoryRe
 		return nil, errors.New("Category not found")
 	}
 
-	if category.Name != req.Name {
-		existing, err := cs.repo.FindByName(req.Name)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to check duplicate category : %v", err)
-		}
-
-		if existing != nil && int64(existing.ID) != id {
-			return nil, errors.New("Category name already exists")
-		}
-	}
-
 	category.Name = req.Name
 
 	if err := cs.repo.Update(category); err != nil {

@@ -10,8 +10,8 @@ type ProductRepository interface {
 	FindAll(req *models.SearchProductRequest) ([]*models.Product, int64, error)
 	FindByID(id int64) (*models.Product, error)
 	FindByName(name string) (*models.Product, error)
-	CreateProduct(req *models.CreateProductRequest) error
-	UpdateProduct(id int64, req *models.UpdateProductRequest) error
+	CreateProduct(req *models.Product) error
+	UpdateProduct(id int64, req *models.Product) error
 	DeleteProduct(id int64) error
 }
 
@@ -35,6 +35,7 @@ func (pr *productRepository) FindAll(req *models.SearchProductRequest) ([]*model
 
 	offset := (req.Page - 1) * req.Limit
 	errData := pr.db.
+		Preload("Category").
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(req.Limit)
@@ -56,7 +57,7 @@ func (pr *productRepository) FindAll(req *models.SearchProductRequest) ([]*model
 func (pr *productRepository) FindByID(id int64) (*models.Product, error) {
 	var product *models.Product
 
-	errProduct := pr.db.Where("id = ? ", id).First(&product).Error
+	errProduct := pr.db.Preload("Category").Where("id = ? ", id).First(&product).Error
 
 	if errProduct != nil {
 		return nil, errProduct
@@ -80,12 +81,12 @@ func (pr *productRepository) FindByName(name string) (*models.Product, error) {
 
 }
 
-func (pr *productRepository) CreateProduct(req *models.CreateProductRequest) error {
+func (pr *productRepository) CreateProduct(req *models.Product) error {
 
 	return pr.db.Create(&req).Error
 }
 
-func (pr *productRepository) UpdateProduct(id int64, req *models.UpdateProductRequest) error {
+func (pr *productRepository) UpdateProduct(id int64, req *models.Product) error {
 	return pr.db.Save(req).Where("id = ?", id).Error
 }
 
